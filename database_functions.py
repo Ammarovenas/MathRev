@@ -174,7 +174,6 @@ def get_random_problem_with_lowest_solved(database_name):
         .filter(Problem.solved == min_solved)
         .all()
     )
-    print(eligible_problems)
     random_problem = random.choice(eligible_problems)
 
     problem_id = random_problem.id

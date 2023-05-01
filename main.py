@@ -283,7 +283,7 @@ class BrowseDialog(QDialog):
         # Set stretch factor for the second column, so it takes up the remaining space
         splitter.setStretchFactor(1, 1)
 
-        problems_data = get_all_data(database_url)
+        problems_data = get_all_data(database_name)
         # print("Problems data:", problems_data)  # Add this line
         self.problems_table.setRowCount(
             len(problems_data))  # Set the number of rows
@@ -350,9 +350,9 @@ class ReviewDialog(QDialog):
         self.timer.stop()
         self.timer_label.setText("00:00")
         self.timer.start(1000)
-        self.current_problem, problem_description, self.solution_description = get_random_problem_with_lowest_solved(
-            database_url)
-        self.current_problem_id = self.current_problem
+        problem, problem_description, self.solution_description = get_random_problem_with_lowest_solved(database_name)
+        self.current_problem = problem
+        #self.current_problem_id = problem.problem_id  # Assuming the problem object has a problem_id attribute
 
         if self.current_problem.image_path:
             problem_image = QImage(self.current_problem.image_path)
@@ -361,10 +361,10 @@ class ReviewDialog(QDialog):
         else:
             self.problem_label.setText(problem_description)
 
-            self.solution_label.setText("Solution will appear here")
-            self.show_solution_button.setVisible(True)
-            self.correct_button.setVisible(False)
-            self.incorrect_button.setVisible(False)
+        self.solution_label.setText("Solution will appear here")
+        self.show_solution_button.setVisible(True)
+        self.correct_button.setVisible(False)
+        self.incorrect_button.setVisible(False)
 
     def __init__(self):
         super().__init__()
@@ -485,17 +485,6 @@ class ImageTextEditor(QTextEdit):
 
 
 def main():
-    print(
-        f'database_path is {database_path}, and database_URL is {database_url}')
-    if not os.path.exists(database_path):
-        print(f"Database file does not exist: {database_path}")
-    else:
-        if not os.access(database_path, os.R_OK | os.W_OK):
-            print(
-                f"Database file is not readable or writable: {database_path}")
-        else:
-            print(
-                f"Database file exists and is readable and writable: {database_path}")
     app = QApplication(sys.argv)
     main_window = MainWindow()
     main_window.show()
