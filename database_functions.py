@@ -3,6 +3,8 @@ from sqlalchemy import create_engine, func
 from sqlalchemy.orm import sessionmaker, joinedload, subqueryload
 from models import Base, Subject, Book, Problem, Solution
 from PyQt5.QtGui import QTextDocument
+from PyQt5.QtCore import Qt, QTimer, QByteArray
+from PyQt5.QtGui import QImage, QPixmap, QKeySequence, QTextDocument
 import random
 from datetime import datetime
 
@@ -11,22 +13,18 @@ database_name = 'my_problem_database'
 engine = create_engine(f'sqlite:///my_problem_database.db')
 Session = sessionmaker(bind=engine)
 
-
 def html_to_plain_text(html):
     document = QTextDocument()
     document.setHtml(html)
     return document.toPlainText()
 
-
 def create_tables(database_url):
     engine = create_engine(database_url)
     Base.metadata.create_all(engine)
 
-
 def create_database(database_name):
     engine = create_engine(f'sqlite:///{database_name}.db')
     Base.metadata.create_all(engine)
-
 
 def get_all_data(database_name):
     engine = create_engine(f'sqlite:///{database_name}.db')
@@ -52,27 +50,24 @@ def get_all_data(database_name):
 
     return problems
 
+# def create_subject(database_name, name):
+#     engine = create_engine(f'sqlite:///{database_name}.db')
+#     Session = sessionmaker(bind=engine)
+#     session = Session()
+# 
+#     new_subject = Subject(name=name)
+#     session.add(new_subject)
+#     session.commit()
+#     session.close()
 
-def create_subject(database_name, name):
-    engine = create_engine(f'sqlite:///{database_name}.db')
-    Session = sessionmaker(bind=engine)
-    session = Session()
-
-    new_subject = Subject(name=name)
-    session.add(new_subject)
-    session.commit()
-    session.close()
-
-
-def create_book(database_name, title, subject_id):
-    engine = create_engine(f'sqlite:///{database_name}.db')
-    Session = sessionmaker(bind=engine)
-    session = Session()
-    new_book = Book(title=title, subject_id=subject_id)
-    session.add(new_book)
-    session.commit()
-    session.close()
-
+# def create_book(database_name, title, subject_id):
+#     engine = create_engine(f'sqlite:///{database_name}.db')
+#     Session = sessionmaker(bind=engine)
+#     session = Session()
+#     new_book = Book(title=title, subject_id=subject_id)
+#     session.add(new_book)
+#     session.commit()
+#     session.close()
 
 def add_problem(database_name, problem_description, book_id=None, solution_description=None, subject_id=None, image_path=None):
     engine = create_engine(f'sqlite:///{database_name}.db')
@@ -92,7 +87,6 @@ def add_problem(database_name, problem_description, book_id=None, solution_descr
     session.commit()
     session.close()
 
-
 def save_image(base64_data, folder='images'):
     os.makedirs(folder, exist_ok=True)
     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
@@ -106,7 +100,6 @@ def save_image(base64_data, folder='images'):
 
     return file_path
 
-
 def refresh_table(dialog_instance, database_name):
     problems_data = create_engine(f'sqlite:///{database_name}.db')
     dialog_instance.problems_table.setRowCount(len(problems_data))
@@ -115,13 +108,11 @@ def refresh_table(dialog_instance, database_name):
             table_item = QTableWidgetItem(str(value))
             dialog_instance.problems_table.setItem(row, col, table_item)
 
-
 def add_subject(name):
     session = Session()
     subject = Subject(name=name)
     session.add(subject)
     session.commit()
-
 
 def add_book(title, subject_id):
     session = Session()
@@ -129,14 +120,13 @@ def add_book(title, subject_id):
     session.add(book)
     session.commit()
 
-
-def add_solution(screenshot_path, problem_id):
-    session = Session()
-    with open(screenshot_path, 'rb') as f:
-        description = f.read()
-    solution = Solution(description=description, problem_id=problem_id)
-    session.add(solution)
-    session.commit()
+#def add_solution(screenshot_path, problem_id):
+#    session = Session()
+#    with open(screenshot_path, 'rb') as f:
+#        description = f.read()
+#    solution = Solution(description=description, problem_id=problem_id)
+#    session.add(solution)
+#    session.commit()
 
 
 def get_subjects(database_name):
@@ -202,14 +192,14 @@ def save_time_value(problem_id, time_value):
     session.close()
 
 
-def mark_solved_correctly(problem_id, database_name):
-    engine = create_engine(f'sqlite:///{database_name}.db')
-    Session = sessionmaker(bind=engine)
-    session = Session()
-
-    problem = session.query(Problem).filter(Problem.id == problem_id).one()
-    problem.solved += 1
-    # or use datetime.datetime.now() for a more readable timestamp
-    problem.time = time.time()
-    session.commit()
-    session.close()
+#def mark_solved_correctly(problem_id, database_name):
+#    engine = create_engine(f'sqlite:///{database_name}.db')
+#    Session = sessionmaker(bind=engine)
+#    session = Session()
+#
+#    problem = session.query(Problem).filter(Problem.id == problem_id).one()
+#    problem.solved += 1
+#    # or use datetime.datetime.now() for a more readable timestamp
+#    problem.time = time.time()
+#    session.commit()
+#    session.close()

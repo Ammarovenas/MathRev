@@ -18,7 +18,7 @@ from PyQt5.QtWidgets import (QApplication, QComboBox, QFileDialog, QFrame, QHBox
                              QTextEdit, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget, QDialog, QStackedWidget)
 
 from models import Subject, Book, Problem, Solution
-from database_functions import create_tables, get_all_data, create_database, create_subject, create_book, add_problem, refresh_table, add_subject, add_book, add_solution, get_subjects, get_books, html_to_plain_text, get_random_problem_with_lowest_solved, mark_solved_correctly
+from database_functions import create_tables, get_all_data, create_database, add_problem, refresh_table, add_subject, add_book, get_subjects, get_books, html_to_plain_text, get_random_problem_with_lowest_solved
 from database_functions import save_time_value, increment_solved_value, save_image
 from sqlalchemy import create_engine, desc
 from sqlalchemy.orm import sessionmaker
@@ -27,6 +27,7 @@ from lxml import html as lxml_html
 from io import BytesIO
 from datetime import datetime
 import random
+from bs4 import BeautifulSoup
 
 database_name = 'my_problem_database'
 database_path = os.path.abspath('my_problem_database.db')
@@ -160,7 +161,7 @@ class AddProblemDialog(QDialog):
         self.populate_subjects()
 
     def populate_subjects(self):
-        subjects = get_subjects('my_problem_database')
+        subjects = get_subjects(database_name)
         self.subject_combobox.clear()
         for subject in subjects:
             self.subject_combobox.addItem(subject.name, subject.id)
@@ -169,7 +170,7 @@ class AddProblemDialog(QDialog):
 
     def populate_books(self):
         subject_id = self.subject_combobox.currentData()
-        books = get_books('my_problem_database', subject_id)
+        books = get_books(database_name, subject_id)
         self.book_combobox.clear()
         for book in books:
             self.book_combobox.addItem(book.title, book.id)
@@ -190,7 +191,6 @@ class AddProblemDialog(QDialog):
             self.populate_books()
 
     def get_selected_book_id(self):
-        # print(f"heeey bitchhhh {self.book_combobox.currentIndex()}")
         return self.book_combobox.itemData(self.book_combobox.currentIndex())
 
     def get_selected_subject_id(self):
@@ -208,16 +208,21 @@ class AddProblemDialog(QDialog):
             return
 
         image_path = None
+        print(problem_description)
         if is_base64_image(problem_description):
-            tree = lxml_html.fromstring(problem_description)
-            img_element = tree.xpath('//img')[0]
-            base64_data = img_element.get('src')
-            base64_data = "data:image/png;base64," + base64_data
+            soup = BeautifulSoup(problem_description, 'html.parser')
+            img_tag = soup.find('img')
+            base64_data = img_tag['src']
+            
+            if not base64_data.startswith("data:image"):
+                base64_data = "data:image/png;base64," + base64_data
             image_path = save_image(base64_data)
-
-        add_problem(database_url, problem_description, book_id,
-                    solution_description, subject_id, image_path)
-        self.close()
+    
+                
+    
+            add_problem(database_name, problem_description, book_id,
+                        solution_description, subject_id, image_path)
+            self.close()
 
 
 class BrowseDialog(QDialog):

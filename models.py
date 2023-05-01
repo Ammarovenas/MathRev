@@ -23,8 +23,8 @@ class Book(Base):
 
 class Problem(Base):
     __tablename__ = 'problems'
-    image_path = Column(String, nullable=True)
     id = Column(Integer, primary_key=True)
+    image_path = Column(String, nullable=True)
     problem_description = Column(String, nullable=False)
     book_id = Column(Integer, ForeignKey('books.id'), nullable=True)
     subject_id = Column(Integer, ForeignKey('subjects.id'), nullable=True)
@@ -34,8 +34,9 @@ class Problem(Base):
     solved = Column(Integer, default=0)
     time = Column(Float, nullable=True)
 
-    def __init__(self, problem_description, book_id=None, book=None, subject_id=None, subject=None, solution=None):
+    def __init__(self, problem_description,image_path=None,book_id=None, book=None, subject_id=None, subject=None, solution=None):
         self.problem_description = problem_description
+        self.image_path = image_path
         self.book_id = book_id
         self.book = book
         self.subject_id = subject_id
