@@ -1,6 +1,6 @@
 import os
 from sqlalchemy import create_engine, func
-from sqlalchemy.orm import sessionmaker,joinedload , subqueryload
+from sqlalchemy.orm import sessionmaker, joinedload, subqueryload
 from models import Base, Subject, Book, Problem, Solution
 from PyQt5.QtGui import QTextDocument
 import random
@@ -8,9 +8,8 @@ from datetime import datetime
 
 
 database_name = 'my_problem_database'
-engine = create_engine(f'sqlite:///{database_name}.db')
+engine = create_engine(f'sqlite:///my_problem_database.db')
 Session = sessionmaker(bind=engine)
-
 
 
 def html_to_plain_text(html):
@@ -18,13 +17,16 @@ def html_to_plain_text(html):
     document.setHtml(html)
     return document.toPlainText()
 
+
 def create_tables(database_url):
     engine = create_engine(database_url)
     Base.metadata.create_all(engine)
 
+
 def create_database(database_name):
     engine = create_engine(f'sqlite:///{database_name}.db')
     Base.metadata.create_all(engine)
+
 
 def get_all_data(database_name):
     engine = create_engine(f'sqlite:///{database_name}.db')
@@ -50,6 +52,7 @@ def get_all_data(database_name):
 
     return problems
 
+
 def create_subject(database_name, name):
     engine = create_engine(f'sqlite:///{database_name}.db')
     Session = sessionmaker(bind=engine)
@@ -60,6 +63,7 @@ def create_subject(database_name, name):
     session.commit()
     session.close()
 
+
 def create_book(database_name, title, subject_id):
     engine = create_engine(f'sqlite:///{database_name}.db')
     Session = sessionmaker(bind=engine)
@@ -69,20 +73,25 @@ def create_book(database_name, title, subject_id):
     session.commit()
     session.close()
 
+
 def add_problem(database_name, problem_description, book_id=None, solution_description=None, subject_id=None, image_path=None):
     engine = create_engine(f'sqlite:///{database_name}.db')
     Base.metadata.create_all(engine)
     Session = sessionmaker(bind=engine)
     session = Session()
 
-    book = session.query(Book).filter(Book.id == book_id).one_or_none() if book_id else None
-    subject = session.query(Subject).filter(Subject.id == subject_id).one_or_none() if subject_id else None
+    book = session.query(Book).filter(
+        Book.id == book_id).one_or_none() if book_id else None
+    subject = session.query(Subject).filter(
+        Subject.id == subject_id).one_or_none() if subject_id else None
 
-    problem = Problem(problem_description=problem_description, book=book, subject=subject, solution=Solution(description=solution_description), image_path=image_path)
+    problem = Problem(problem_description=problem_description, book=book, subject=subject,
+                      solution=Solution(description=solution_description), image_path=image_path)
 
     session.add(problem)
     session.commit()
     session.close()
+
 
 def save_image(base64_data, folder='images'):
     os.makedirs(folder, exist_ok=True)
@@ -97,6 +106,7 @@ def save_image(base64_data, folder='images'):
 
     return file_path
 
+
 def refresh_table(dialog_instance, database_name):
     problems_data = create_engine(f'sqlite:///{database_name}.db')
     dialog_instance.problems_table.setRowCount(len(problems_data))
@@ -105,17 +115,20 @@ def refresh_table(dialog_instance, database_name):
             table_item = QTableWidgetItem(str(value))
             dialog_instance.problems_table.setItem(row, col, table_item)
 
+
 def add_subject(name):
     session = Session()
     subject = Subject(name=name)
     session.add(subject)
     session.commit()
 
+
 def add_book(title, subject_id):
     session = Session()
     book = Book(title=title, subject_id=subject_id)
     session.add(book)
     session.commit()
+
 
 def add_solution(screenshot_path, problem_id):
     session = Session()
@@ -124,6 +137,7 @@ def add_solution(screenshot_path, problem_id):
     solution = Solution(description=description, problem_id=problem_id)
     session.add(solution)
     session.commit()
+
 
 def get_subjects(database_name):
     engine = create_engine(f'sqlite:///{database_name}.db')
@@ -135,6 +149,7 @@ def get_subjects(database_name):
 
     return subjects
 
+
 def get_books(database_name, subject_id):
     engine = create_engine(f'sqlite:///{database_name}.db')
     Session = sessionmaker(bind=engine)
@@ -145,12 +160,13 @@ def get_books(database_name, subject_id):
 
     return books
 
+
 def get_random_problem_with_lowest_solved(database_name):
     engine = create_engine(f'sqlite:///{database_name}.db')
     Session = sessionmaker(bind=engine)
     session = Session()
 
-    min_solved = session.query(func.min(Problem.solved)).scalar()
+    min_solved = session.query(func.min(Problem.solved)) .scalar()
 
     eligible_problems = (
         session.query(Problem)
@@ -158,7 +174,7 @@ def get_random_problem_with_lowest_solved(database_name):
         .filter(Problem.solved == min_solved)
         .all()
     )
-
+    print(eligible_problems)
     random_problem = random.choice(eligible_problems)
 
     problem_id = random_problem.id
@@ -170,12 +186,14 @@ def get_random_problem_with_lowest_solved(database_name):
 
     return problem_id, problem_description, solution_description
 
+
 def increment_solved_value(problem_id):
     session = Session()
     problem = session.query(Problem).filter(Problem.id == problem_id).one()
     problem.solved += 1
     session.commit()
     session.close()
+
 
 def save_time_value(problem_id, time_value):
     session = Session()
@@ -184,6 +202,7 @@ def save_time_value(problem_id, time_value):
     session.commit()
     session.close()
 
+
 def mark_solved_correctly(problem_id, database_name):
     engine = create_engine(f'sqlite:///{database_name}.db')
     Session = sessionmaker(bind=engine)
@@ -191,6 +210,7 @@ def mark_solved_correctly(problem_id, database_name):
 
     problem = session.query(Problem).filter(Problem.id == problem_id).one()
     problem.solved += 1
-    problem.time = time.time()  # or use datetime.datetime.now() for a more readable timestamp
+    # or use datetime.datetime.now() for a more readable timestamp
+    problem.time = time.time()
     session.commit()
     session.close()

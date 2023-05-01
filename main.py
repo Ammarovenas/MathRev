@@ -18,7 +18,7 @@ from PyQt5.QtWidgets import (QApplication, QComboBox, QFileDialog, QFrame, QHBox
                              QTextEdit, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget, QDialog, QStackedWidget)
 
 from models import Subject, Book, Problem, Solution
-from database_functions import create_tables, get_all_data, create_database, create_subject, create_book, add_problem, refresh_table, add_subject, add_book, add_solution, get_subjects, get_books, html_to_plain_text, get_random_problem_with_lowest_solved,mark_solved_correctly 
+from database_functions import create_tables, get_all_data, create_database, create_subject, create_book, add_problem, refresh_table, add_subject, add_book, add_solution, get_subjects, get_books, html_to_plain_text, get_random_problem_with_lowest_solved, mark_solved_correctly
 from database_functions import save_time_value, increment_solved_value, save_image
 from sqlalchemy import create_engine, desc
 from sqlalchemy.orm import sessionmaker
@@ -28,13 +28,12 @@ from io import BytesIO
 from datetime import datetime
 import random
 
-
-current_directory = os.path.dirname(os.path.realpath(__file__))
-database_path = os.path.join(current_directory, 'my_problem_database.db')
-database_url = f'sqlite:///{database_path}'
+database_name = 'my_problem_database'
+database_path = os.path.abspath('my_problem_database.db')
+database_url = f'sqlite:///{database_name}.db'
 create_tables(database_url)
 
-DATABASE_NAME = 'my_problem_database'
+
 engine = create_engine(database_url)
 Session = sessionmaker(bind=engine)
 
@@ -46,6 +45,7 @@ def is_base64_image(string):
         return True if img_element else False
     except:
         return False
+
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -70,7 +70,8 @@ class MainWindow(QMainWindow):
         top_layout.addWidget(review_settings_button)
 
         start_review_button = QPushButton('Start Review')
-        start_review_button.setFixedHeight(50)  # Set a larger height for the Start Review button
+        # Set a larger height for the Start Review button
+        start_review_button.setFixedHeight(50)
         start_review_button.clicked.connect(self.start_review_clicked)
         # Add the appropriate connected function for the Start Review button
         # start_review_button.clicked.connect(self.start_review_clicked)
@@ -79,7 +80,7 @@ class MainWindow(QMainWindow):
         main_layout.addLayout(top_layout)
         main_layout.addWidget(start_review_button)
         main_layout.addStretch()
-        
+
         self.browse_dialog = None
         container = QWidget()
         container.setLayout(main_layout)
@@ -92,21 +93,16 @@ class MainWindow(QMainWindow):
     def add_problem_clicked(self):
         add_problem_dialog = AddProblemDialog()
         result = add_problem_dialog.exec()
-    
+
         if result == QDialog.Accepted and self.browse_dialog is not None:
             refresh_table(self.browse_dialog, database_name)
 
-
-    def browse_button_clicked(self):
-        browse_dialog = BrowseDialog()
-        browse_dialog.exec_()
-
     def start_review_clicked(self):
         review_dialog = ReviewDialog()
-        review_dialog.exec_()
+        review_dialog.exec()
+
 
 class AddProblemDialog(QDialog):
-
 
     def __init__(self):
         super().__init__()
@@ -156,7 +152,6 @@ class AddProblemDialog(QDialog):
 
         self.setLayout(layout)
 
-        
         self.subject_combobox.currentIndexChanged.connect(self.populate_books)
 
         add_subject_button.clicked.connect(self.add_new_subject)
@@ -178,23 +173,24 @@ class AddProblemDialog(QDialog):
         self.book_combobox.clear()
         for book in books:
             self.book_combobox.addItem(book.title, book.id)
-    
+
     def add_new_subject(self):
         text, ok = QInputDialog.getText(self, "New Subject", "Subject Name:")
         if ok and text:
-            add_subject(text)  # Change this line from create_subject to add_subject
+            # Change this line from create_subject to add_subject
+            add_subject(text)
             self.populate_subjects()
-
 
     def add_new_book(self):
         text, ok = QInputDialog.getText(self, "New Book", "Book Title:")
         if ok and text:
             subject_id = self.subject_combobox.currentData()
-            add_book(text, subject_id)  # Change this line from create_book to add_book
+            # Change this line from create_book to add_book
+            add_book(text, subject_id)
             self.populate_books()
 
     def get_selected_book_id(self):
-        #print(f"heeey bitchhhh {self.book_combobox.currentIndex()}")
+        # print(f"heeey bitchhhh {self.book_combobox.currentIndex()}")
         return self.book_combobox.itemData(self.book_combobox.currentIndex())
 
     def get_selected_subject_id(self):
@@ -207,7 +203,8 @@ class AddProblemDialog(QDialog):
         subject_id = self.subject_combobox.currentData()
 
         if not problem_description or not solution_description:
-            QMessageBox.warning(self, "Warning", "Please fill in all the fields.")
+            QMessageBox.warning(
+                self, "Warning", "Please fill in all the fields.")
             return
 
         image_path = None
@@ -218,8 +215,10 @@ class AddProblemDialog(QDialog):
             base64_data = "data:image/png;base64," + base64_data
             image_path = save_image(base64_data)
 
-        add_problem(database_url, problem_description, book_id, solution_description, subject_id, image_path)
+        add_problem(database_url, problem_description, book_id,
+                    solution_description, subject_id, image_path)
         self.close()
+
 
 class BrowseDialog(QDialog):
 
@@ -261,7 +260,8 @@ class BrowseDialog(QDialog):
         # Second column (table)
         self.problems_table = QTableWidget()
         self.problems_table.setColumnCount(6)
-        self.problems_table.setHorizontalHeaderLabels(["Problem", "Solution", "Subject", "Book", "Solved", "Time"])
+        self.problems_table.setHorizontalHeaderLabels(
+            ["Problem", "Solution", "Subject", "Book", "Solved", "Time"])
         # Add table items here
         # e.g. self.problems_table.setItem(0, 0, QTableWidgetItem("Problem 1"))
 
@@ -278,23 +278,28 @@ class BrowseDialog(QDialog):
         splitter.addWidget(self.navigation_tree)
         splitter.addWidget(self.problems_table)
         splitter.addWidget(delete_button_container)
-        splitter.setSizes([210, self.width() - 410, 200])  # Set initial sizes of the splitter
-        splitter.setStretchFactor(1, 1)  # Set stretch factor for the second column, so it takes up the remaining space
-
-
+        # Set initial sizes of the splitter
+        splitter.setSizes([210, self.width() - 410, 200])
+        # Set stretch factor for the second column, so it takes up the remaining space
+        splitter.setStretchFactor(1, 1)
 
         problems_data = get_all_data(database_url)
-        #print("Problems data:", problems_data)  # Add this line
-        self.problems_table.setRowCount(len(problems_data))  # Set the number of rows
+        # print("Problems data:", problems_data)  # Add this line
+        self.problems_table.setRowCount(
+            len(problems_data))  # Set the number of rows
         for row, (problem_id, problem_description, solution_description, subject_name, book_title, solved, time) in enumerate(problems_data):
-            self.problems_table.setItem(row, 0, QTableWidgetItem(self.html_to_plain_text(problem_description)))
-            self.problems_table.setItem(row, 1, QTableWidgetItem(self.html_to_plain_text(solution_description) if solution_description else ""))
-            self.problems_table.setItem(row, 2, QTableWidgetItem(subject_name if subject_name else ""))
-            self.problems_table.setItem(row, 3, QTableWidgetItem(book_title if book_title else ""))
-            self.problems_table.setItem(row, 4, QTableWidgetItem("Yes" if solved else "No"))
-            self.problems_table.setItem(row, 5, QTableWidgetItem(str(time) if time else ""))
-
-
+            self.problems_table.setItem(row, 0, QTableWidgetItem(
+                self.html_to_plain_text(problem_description)))
+            self.problems_table.setItem(row, 1, QTableWidgetItem(
+                self.html_to_plain_text(solution_description) if solution_description else ""))
+            self.problems_table.setItem(row, 2, QTableWidgetItem(
+                subject_name if subject_name else ""))
+            self.problems_table.setItem(
+                row, 3, QTableWidgetItem(book_title if book_title else ""))
+            self.problems_table.setItem(
+                row, 4, QTableWidgetItem("Yes" if solved else "No"))
+            self.problems_table.setItem(
+                row, 5, QTableWidgetItem(str(time) if time else ""))
 
         layout.addWidget(splitter)
 
@@ -304,6 +309,7 @@ class BrowseDialog(QDialog):
         # Set the column widths for the table widget in the second column
         self.navigation_tree.setColumnWidth(0, 200)
         self.problems_table.setColumnWidth(2, 200)
+
 
 class ReviewDialog(QDialog):
 
@@ -323,11 +329,11 @@ class ReviewDialog(QDialog):
         minutes, seconds = map(int, time_value.split(':'))
         total_seconds = minutes * 60 + seconds
         save_time_value(self.current_problem, total_seconds)
-        
+
         self.current_problem_id = None
         # Reset the Start Review window to show a new problem
         self.reset_review_window()
-    
+
     def is_html_with_image(self, string):
         try:
             tree = lxml_html.fromstring(string)
@@ -335,7 +341,6 @@ class ReviewDialog(QDialog):
             return True if img_element else False
         except:
             return False
-
 
     def incorrect_clicked(self):
         # Reset the Start Review window and show a new problem
@@ -345,7 +350,8 @@ class ReviewDialog(QDialog):
         self.timer.stop()
         self.timer_label.setText("00:00")
         self.timer.start(1000)
-        self.current_problem, problem_description, self.solution_description = get_random_problem_with_lowest_solved(database_url)
+        self.current_problem, problem_description, self.solution_description = get_random_problem_with_lowest_solved(
+            database_url)
         self.current_problem_id = self.current_problem
 
         if self.current_problem.image_path:
@@ -373,7 +379,8 @@ class ReviewDialog(QDialog):
 
         # Timer
         self.timer_label = QLabel("00:00")
-        self.timer_label.setStyleSheet("QLabel { background-color : white; }")  # Set the background to white
+        # Set the background to white
+        self.timer_label.setStyleSheet("QLabel { background-color : white; }")
         timer_layout.addWidget(self.timer_label)
         timer_container = QWidget()
         timer_container.setLayout(timer_layout)
@@ -396,13 +403,14 @@ class ReviewDialog(QDialog):
         solution_section = QVBoxLayout()
         self.solution_label = QLabel("Solution will appear here")
         self.solution_label.setWordWrap(True)
-        self.solution_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.solution_label.setSizePolicy(
+            QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.solution_label.setAlignment(Qt.AlignCenter)
         solution_section.addWidget(self.solution_label)
-        main_layout.addLayout(solution_section, stretch=1)  # Add stretch factor
+        # Add stretch factor
+        main_layout.addLayout(solution_section, stretch=1)
 
-
-        #buttons
+        # buttons
 
         buttons_layout = QHBoxLayout()
         self.correct_button = QPushButton("Correct", self)
@@ -420,14 +428,16 @@ class ReviewDialog(QDialog):
 
         # Show Answer button
         self.show_solution_button = QPushButton("Show Answer")
-        self.show_solution_button.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Preferred)  # Adjust the size policy
-        main_layout.addWidget(self.show_solution_button, alignment=Qt.AlignCenter)  # Center the button
-
+        self.show_solution_button.setSizePolicy(
+            QSizePolicy.Maximum, QSizePolicy.Preferred)  # Adjust the size policy
+        main_layout.addWidget(self.show_solution_button,
+                              alignment=Qt.AlignCenter)  # Center the button
 
         # Set up the timer
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_timer)
-        self.timer.start(1000)  # Update the timer every 1000 milliseconds (1 second)
+        # Update the timer every 1000 milliseconds (1 second)
+        self.timer.start(1000)
 
         # Connect the Show Answer button
         self.show_solution_button.clicked.connect(self.show_solution)
@@ -437,9 +447,11 @@ class ReviewDialog(QDialog):
 
         self.setLayout(main_layout)
 
-        self.current_problem = get_random_problem_with_lowest_solved(database_url)
+        self.current_problem = get_random_problem_with_lowest_solved(
+            database_name)
         if self.current_problem:
-            self.current_problem, problem_description, self.solution_description = get_random_problem_with_lowest_solved(database_url)
+            self.current_problem, problem_description, self.solution_description = get_random_problem_with_lowest_solved(
+                database_name)
             self.problem_label.setText(problem_description)
         else:
             self.problem_label.setText("No problems available for review.")
@@ -452,6 +464,7 @@ class ReviewDialog(QDialog):
             seconds = 0
             minutes += 1
         self.timer_label.setText(f"{minutes:02d}:{seconds:02d}")
+
 
 class ImageTextEditor(QTextEdit):
     def __init__(self, parent=None):
@@ -470,12 +483,24 @@ class ImageTextEditor(QTextEdit):
         else:
             super().keyPressEvent(event)
 
+
 def main():
+    print(
+        f'database_path is {database_path}, and database_URL is {database_url}')
+    if not os.path.exists(database_path):
+        print(f"Database file does not exist: {database_path}")
+    else:
+        if not os.access(database_path, os.R_OK | os.W_OK):
+            print(
+                f"Database file is not readable or writable: {database_path}")
+        else:
+            print(
+                f"Database file exists and is readable and writable: {database_path}")
     app = QApplication(sys.argv)
     main_window = MainWindow()
     main_window.show()
     sys.exit(app.exec())
 
+
 if __name__ == '__main__':
     main()
-
